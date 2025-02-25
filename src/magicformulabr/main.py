@@ -13,6 +13,7 @@ import argparse
 import json
 import logging
 import os
+import sys
 import time
 
 import pandas as pd
@@ -74,50 +75,21 @@ def parse_parameters():
     return parser.parse_args()
 
 
-def setup_logging(logfile=None, *, filemode="a", date_format=None, log_level="DEBUG"):
-    """
-    Configure logging.
+def setup_logging(log_level=logging.INFO):
+    """Setup logging configuration."""
+    datefmt = "%Y-%m-%d %H:%M:%S"
+    msg_fmt = "%(asctime)s %(module)s - %(funcName)s [%(levelname)s] %(message)s"
 
-    Arguments (opt):
-        logfile     (str): log file to write the log messages
-                               If not specified, it shows log messages
-                               on screen (stderr)
-    Keyword arguments (opt):
-        filemode    (a/w): a - log messages are appended to the file (default)
-                           w - log messages overwrite the file
-        date_format (str): date format in strftime format
-                           default is %m/%d/%Y %H:%M:%S
-        log_level   (str): specifies the lowest-severity log message
-                           DEBUG, INFO, WARNING, ERROR or CRITICAL
-                           default is DEBUG
-    """
-    dict_level = {
-        "DEBUG": logging.DEBUG,
-        "INFO": logging.INFO,
-        "WARNING": logging.WARNING,
-        "ERROR": logging.ERROR,
-        "CRITICAL": logging.CRITICAL,
-    }
-
-    if log_level not in dict_level:
-        raise ValueError("Invalid log_level")
-    if filemode not in ["a", "w"]:
-        raise ValueError("Invalid filemode")
-
-    if not date_format:
-        date_format = "%m/%d/%Y %H:%M:%S"
-
-    log_fmt = "%(asctime)s %(module)s %(funcName)s %(levelname)s %(message)s"
-
-    logging.basicConfig(
-        level=dict_level[log_level],
-        format=log_fmt,
-        datefmt=date_format,
-        filemode=filemode,
-        filename=logfile,
+    formatter = logging.Formatter(
+        fmt=msg_fmt,
+        datefmt=datefmt,
     )
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(formatter)
 
-    return logging.getLogger(__name__)
+    root_logger = logging.getLogger()
+    root_logger.setLevel(log_level)
+    root_logger.addHandler(handler)
 
 
 class DataSourceHandler:
@@ -161,7 +133,7 @@ class DataSourceHandler:
             "Accept": "*/*",
             "Accept-Encoding": "gzip, deflate",
         }
-        response = requests.get(URL, headers=headers, timeout=60)
+        response = requests.get(self.url, headers=headers, timeout=60)
         return pd.read_html(
             response.text,
             thousands=".",
@@ -178,16 +150,16 @@ class DataSourceHandler:
             bool: True if the cache is valid, False otherwise.
         """
         if not os.path.exists(self.cache_file):
-            log.debug("Cache file '%s' does not exist.", self.cache_file)
+            logging.debug("Cache file '%s' does not exist.", self.cache_file)
             return False
 
         cache_age = time.time() - os.path.getmtime(self.cache_file)
 
         if cache_age > self.cache_duration:
-            log.debug("Cache is outdated (age: %.2f seconds).", cache_age)
+            logging.debug("Cache is outdated (age: %.2f seconds).", cache_age)
             return False
 
-        log.debug("Cache is valid (age: %.2f seconds).", cache_age)
+        logging.debug("Cache is valid (age: %.2f seconds).", cache_age)
         return True
 
     def load_from_cache(self):
@@ -221,12 +193,12 @@ class DataSourceHandler:
             pd.DataFrame: The data retrieved from the cache or downloaded from the URL.
         """
         if self.force_update or not self.is_cache_valid():
-            log.debug("Force updating or cache is invalid. Downloading new data.")
+            logging.debug("Force updating or cache is invalid. Downloading new data.")
             pd_df = self.fetch_data()
             self.save_to_cache(pd_df)
             return pd_df
 
-        log.debug("Loading data from cache.")
+        logging.debug("Loading data from cache.")
         return self.load_from_cache()
 
 
@@ -295,9 +267,9 @@ class MagicFormula:
             col_name (str): The name of the column to evaluate for removal.
             min_value (int or float): The threshold below which rows will be removed.
         """
-        log.debug("Removing companies with %s less than %s", col_name, min_value)
+        logging.debug("Removing companies with %s less than %s", col_name, min_value)
         tickers = self.pd_df.loc[self.pd_df[col_name] <= min_value].index
-        log.debug(self.pd_df.loc[tickers])
+        logging.debug(self.pd_df.loc[tickers])
         self.pd_df.drop(tickers, inplace=True)
 
     def filter_data(self):
@@ -374,13 +346,14 @@ class MagicFormula:
 ##############################################################################
 def main():
     """Command line execution."""
-    global log
 
     # Parser the command line
     args = parse_parameters()
-    # Configura log --debug
-    log = setup_logging() if args.debug else logging
-    log.debug("CMD line args: %s", vars(args))
+
+    log_level = logging.DEBUG if args.debug else logging.INFO
+    setup_logging(log_level)
+
+    logging.debug("CMD line args: %s", vars(args))
 
     data_handler = DataSourceHandler(URL, force_update=args.force_update)
     pd_df = data_handler.get_data()
