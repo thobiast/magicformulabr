@@ -10,6 +10,7 @@ companies based on the user's selection.
 """
 
 import argparse
+import io
 import json
 import logging
 import os
@@ -134,8 +135,10 @@ class DataSourceHandler:
             "Accept-Encoding": "gzip, deflate",
         }
         response = requests.get(self.url, headers=headers, timeout=60)
+        # Wrap the HTML string in StringIO to avoid deprecation warning.
+        html_data = io.StringIO(response.text)
         return pd.read_html(
-            response.text,
+            html_data,
             thousands=".",
             decimal=",",
             index_col="Papel",
