@@ -134,7 +134,13 @@ class DataSourceHandler:
             "Accept": "*/*",
             "Accept-Encoding": "gzip, deflate",
         }
-        response = requests.get(self.url, headers=headers, timeout=60)
+        try:
+            response = requests.get(self.url, headers=headers, timeout=60)
+            response.raise_for_status()
+        except requests.RequestException as e:
+            logging.error("Failed to fetch data from %s: %s", self.url, e)
+            sys.exit(1)
+
         # Wrap the HTML string in StringIO to avoid deprecation warning.
         html_data = io.StringIO(response.text)
         return pd.read_html(
@@ -198,6 +204,9 @@ class DataSourceHandler:
         if self.force_update or not self.is_cache_valid():
             logging.debug("Force updating or cache is invalid. Downloading new data.")
             pd_df = self.fetch_data()
+            if pd_df.empty:
+                logging.error("Fetched data is empty. Exiting.")
+                sys.exit(1)
             self.save_to_cache(pd_df)
             return pd_df
 
