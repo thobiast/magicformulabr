@@ -2,7 +2,6 @@
 
 [![Build and Test](https://github.com/thobiast/magicformulabr/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/thobiast/magicformulabr/actions/workflows/build.yml)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/magicformulabr)
-[![codecov](https://codecov.io/gh/thobiast/magicformulabr/branch/main/graph/badge.svg)](https://codecov.io/gh/thobiast/magicformulabr)
 [![GitHub License](https://img.shields.io/github/license/thobiast/magicformulabr)](https://github.com/thobiast/magicformulabr/blob/main/LICENSE)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
