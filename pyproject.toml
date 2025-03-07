@@ -1,0 +1,29 @@
+[project]
+name = "magicformulabr"
+description = "Magic Formula script for companies listed at Bovespa."
+readme = "README.md"
+license = {file = "LICENSE"}
+dynamic = ["version", "dependencies"]
+requires-python = ">=3.7"
+authors = [
+    {name = "Thobias Salazar Trevisan"},
+]
+
+[project.scripts]
+magicformulabr = "magicformulabr.main:main"
+
+[project.urls]
+"Homepage" = "https://github.com/thobiast/magicformulabr"
+"Source" = "https://github.com/thobiast/magicformulabr"
+
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = ["magicformulabr"]
+
+[tool.setuptools.dynamic]
+version = {attr = "magicformulabr.__version__"}
+dependencies = {file = ["requirements.txt"]}

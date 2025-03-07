@@ -1,8 +1,7 @@
-# magicformulabr - Script que implementa a magic formula de Joel Greenblatt para empresas listadas na Bovespa.
+# magicformulabr - Script que implementa a magic formula de Joel Greenblatt para classificar empresas listadas na Bovespa.
 
-![build](https://github.com/thobiast/magicformulabr/workflows/build/badge.svg)
+[![Build and Test](https://github.com/thobiast/magicformulabr/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/thobiast/magicformulabr/actions/workflows/build.yml)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/magicformulabr)
-[![codecov](https://codecov.io/gh/thobiast/magicformulabr/branch/main/graph/badge.svg)](https://codecov.io/gh/thobiast/magicformulabr)
 [![GitHub License](https://img.shields.io/github/license/thobiast/magicformulabr)](https://github.com/thobiast/magicformulabr/blob/main/LICENSE)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
@@ -20,9 +19,12 @@ pip install magicformulabr
 
 ## Uso
 
+O magicformulabr armazena os dados baixados em um arquivo local "*data_cache.json*" por 24 horas
+para evitar requisições desnecessárias. Use `--force-update` para atualizar os dados.
+
 ```bash
 $ magicformulabr -h
-usage: magicformulabr [-h] [-d] [-v] [-m {1,2,3}] [-t TOP]
+usage: magicformulabr [-h] [-d] [-v] [-m {1,2,3}] [-t TOP] [--force-update]
 
 Gera rank de acoes usando a magic formula
 
@@ -33,6 +35,7 @@ optional arguments:
   -m {1,2,3}, --method {1,2,3}
                         Campos usados para o calculo da magic formula
   -t TOP, --top TOP     Numero de empresas para mostrar no rank
+  --force-update        Forca a atualizacao do cache
 
     Methods disponiveis:
         1 - P/L e ROE
