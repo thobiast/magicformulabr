@@ -261,7 +261,7 @@ class MagicFormula:
         """
         return float(number.strip("%").replace(".", "").replace(",", "."))
 
-    def apply_converters(self):
+    def _apply_converters(self):
         """
         Converts specific columns in `pd_df` to the necessary data type or format.
         """
@@ -284,7 +284,7 @@ class MagicFormula:
         logging.debug(self.pd_df.loc[tickers])
         self.pd_df.drop(tickers, inplace=True)
 
-    def filter_data(self):
+    def _filter_data(self):
         """
         Removes rows in `pd_df` with negative or undesirable values for key financial metrics.
 
@@ -294,35 +294,6 @@ class MagicFormula:
         self._remove_rows(self.ret_on_capital, 0)
         self._remove_rows("Liq.2meses", 0)
 
-    def drop_unneeded_columns(self, level):
-        """
-        Removes unnecessary columns from `pd_df` based on the specified verbosity level.
-
-        Parameters:
-            level (int): The verbosity level that determines which columns are retained.
-                        Higher levels retain more columns.
-        """
-        df_columns = self.pd_df.columns.tolist()
-        if level == 0:
-            keep_cols = [self.earnings_yield, self.ret_on_capital]
-        elif level == 1:
-            keep_cols = [
-                "Cotação",
-                "Div.Yield",
-                "ROIC",
-                "ROE",
-                "P/L",
-                "EV/EBIT",
-                "EV/EBITDA",
-                self.earnings_yield,
-                self.ret_on_capital,
-            ]
-        else:
-            return
-
-        remove_cols = [x for x in df_columns if x not in keep_cols]
-        self.pd_df.drop(remove_cols, axis="columns", inplace=True)
-
     def calc_rank(self):
         """
         Calculates the Magic Formula ranking for companies in `pd_df`.
@@ -330,6 +301,12 @@ class MagicFormula:
         Adds ranking columns to `pd_df` based on the earnings yield and return on capital,
         then calculates a final rank.
         """
+        self._apply_converters()
+        self._filter_data()
+
+        if self.pd_df.empty:
+            return self.pd_df
+
         self.pd_df["Rank_earnings_yield"] = self.pd_df[self.earnings_yield].rank(
             ascending=True, method="min"
         )
@@ -341,16 +318,50 @@ class MagicFormula:
         )
         self.pd_df.sort_values(by="Rank_Final", ascending=True, inplace=True)
 
-    def show_rank(self, top):
-        """
-        Displays the top-ranked companies.
+        return self.pd_df
 
-        Parameters:
-            top (int): The number of top-ranked companies to display.
-        """
-        self.pd_df.reset_index(inplace=True)
-        self.pd_df.index = self.pd_df.index + 1
-        print(self.pd_df.head(top).to_string())
+
+def display_results(df, args):
+    """
+    Displays the top-ranked companies according to verbosity.
+
+    Parameters:
+        df (pd.DataFrame):
+            The ranked DataFrame produced by `MagicFormula.calc_rank()`.
+        args (argparse.Namespace):
+            Parsed command-line arguments containing:
+                - method (int): Magic Formula method (1, 2, or 3) to determine key columns.
+                - verbose (int): Verbosity level (0, 1, or >=2) to control displayed columns.
+                - top (int): Number of companies to display.
+    """
+    df_display = df.copy()
+
+    base_cols = ["Rank_earnings_yield", "Rank_return_on_capital", "Rank_Final"]
+
+    magic_method_cols = MagicFormula.MAGIC_METHOD_FIELD[str(args.method)]
+    earnings_yield_col = magic_method_cols["earnings yield"]
+    return_on_capital_col = magic_method_cols["return on capital"]
+
+    if args.verbose == 0:
+        keep_cols = [earnings_yield_col, return_on_capital_col] + base_cols
+    elif args.verbose == 1:
+        keep_cols = [
+            "Cotação",
+            "Div.Yield",
+            "ROIC",
+            "ROE",
+            "P/L",
+            "EV/EBIT",
+            "EV/EBITDA",
+            earnings_yield_col,
+            return_on_capital_col,
+        ] + base_cols
+    else:
+        keep_cols = df_display.columns.tolist()
+
+    df_display.reset_index(inplace=True, names="Ticker")
+    df_display.index = df_display.index + 1
+    print(df_display.head(args.top).to_string(columns=["Ticker"] + keep_cols))
 
 
 ##############################################################################
@@ -371,11 +382,11 @@ def main():
     pd_df = data_handler.get_data()
 
     magicformula = MagicFormula(pd_df, str(args.method))
-    magicformula.apply_converters()
-    magicformula.filter_data()
-    magicformula.drop_unneeded_columns(level=args.verbose)
-    magicformula.calc_rank()
-    magicformula.show_rank(args.top)
+    ranked_df = magicformula.calc_rank()
+    if ranked_df.empty:
+        print("No companies passed the filtering criteria. The ranking is empty.")
+    else:
+        display_results(ranked_df, args)
 
 
 ##############################################################################

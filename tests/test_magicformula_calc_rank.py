@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Test calc_rank method."""
 
+from unittest.mock import Mock
+
 import pandas as pd
 import pytest
 
@@ -25,5 +27,7 @@ BBBB3      8.0    60                  4.0                     2.0         6.0
 CCCC3      4.0    40                  3.0                     3.0         6.0"""
 
     magic_formula = MagicFormula(sample_df, magic_method="2")
-    magic_formula.calc_rank()
-    assert magic_formula.pd_df.to_string() == expected_result
+    magic_formula._apply_converters = Mock()  # pylint: disable=protected-access
+    magic_formula._filter_data = Mock()  # pylint: disable=protected-access
+    pd_df = magic_formula.calc_rank()
+    assert pd_df.to_string() == expected_result
