@@ -362,6 +362,9 @@ def display_results(df, args):
     else:
         keep_cols = df_display.columns.tolist()
 
+    # Remove duplicates preserving order
+    keep_cols = list(dict.fromkeys(keep_cols))
+
     df_display.reset_index(inplace=True, names="Ticker")
     df_display.index = df_display.index + 1
     print(df_display.head(args.top).to_string(columns=["Ticker"] + keep_cols))
