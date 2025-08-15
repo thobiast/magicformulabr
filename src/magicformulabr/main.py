@@ -297,16 +297,13 @@ class MagicFormula:
         self._remove_rows(self.ret_on_capital, 0)
         self._remove_rows("Liq.2meses", 0)
 
-    def calc_rank(self):
+    def _calculate_rank(self):
         """
         Calculates the Magic Formula ranking for companies in `pd_df`.
 
         Adds ranking columns to `pd_df` based on the earnings yield and return on capital,
         then calculates a final rank.
         """
-        self._apply_converters()
-        self._filter_data()
-
         if self.pd_df.empty:
             return self.pd_df
 
@@ -322,6 +319,15 @@ class MagicFormula:
         self.pd_df.sort_values(by="Rank_Final", ascending=True, inplace=True)
 
         return self.pd_df
+
+    def process(self):
+        """
+        Executes the full Magic Formula process: conversion, filtering, and ranking.
+        """
+        self._apply_converters()
+        self._filter_data()
+        df_ranked = self._calculate_rank()
+        return df_ranked
 
 
 def display_results(df, args):
@@ -388,7 +394,7 @@ def main():
     pd_df = data_handler.get_data()
 
     magicformula = MagicFormula(pd_df, args.method)
-    ranked_df = magicformula.calc_rank()
+    ranked_df = magicformula.process()
     if ranked_df.empty:
         print("No companies passed the filtering criteria. The ranking is empty.")
     else:
