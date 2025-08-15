@@ -26,7 +26,7 @@ AAAA3      0.2    10                  1.0                     4.0         5.0
 BBBB3      8.0    60                  4.0                     2.0         6.0
 CCCC3      4.0    40                  3.0                     3.0         6.0"""
 
-    magic_formula = MagicFormula(sample_df, magic_method="2")
+    magic_formula = MagicFormula(sample_df, magic_method=2)
     magic_formula._apply_converters = Mock()  # pylint: disable=protected-access
     magic_formula._filter_data = Mock()  # pylint: disable=protected-access
     pd_df = magic_formula.calc_rank()

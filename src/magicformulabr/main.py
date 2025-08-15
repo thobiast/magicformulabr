@@ -42,6 +42,7 @@ def parse_parameters():
         %(prog)s -v
         %(prog)s -vv
         %(prog)s -m 3 -vv
+        %(prog)s -m 3 --top 30 --force-update
     """
     parser = argparse.ArgumentParser(
         description="Gera rank de acoes usando a magic formula",
@@ -228,15 +229,15 @@ class MagicFormula:
     # MAGIC_METHOD_FIELD is a dictionary mapping method identifiers to their respective
     # financial metrics used in the Magic Formula calculation. Each method identifier
     # corresponds to a different set of financial metrics:
-    #   - "1": Uses 'P/L' for earnings yield and 'ROE' for return on capital.
-    #   - "2": Uses 'EV/EBIT' for earnings yield and 'ROIC' for return on capital.
-    #   - "3": Uses 'EV/EBITDA' for earnings yield and 'ROIC' for return on capital.
+    #   - 1: Uses 'P/L' for earnings yield and 'ROE' for return on capital.
+    #   - 2: Uses 'EV/EBIT' for earnings yield and 'ROIC' for return on capital.
+    #   - 3: Uses 'EV/EBITDA' for earnings yield and 'ROIC' for return on capital.
     # These mappings allow for flexibility in defining which financial metrics are used in
     # the calculationof the Magic Formula, accommodating different variations of the formula.
     MAGIC_METHOD_FIELD = {
-        "1": {"earnings yield": "P/L", "return on capital": "ROE"},
-        "2": {"earnings yield": "EV/EBIT", "return on capital": "ROIC"},
-        "3": {"earnings yield": "EV/EBITDA", "return on capital": "ROIC"},
+        1: {"earnings yield": "P/L", "return on capital": "ROE"},
+        2: {"earnings yield": "EV/EBIT", "return on capital": "ROIC"},
+        3: {"earnings yield": "EV/EBITDA", "return on capital": "ROIC"},
     }
 
     def __init__(self, pd_df, magic_method):
@@ -246,7 +247,7 @@ class MagicFormula:
 
         Parameters:
             pd_df (pandas.DataFrame): The financial data of companies.
-            magic_method (str): Specifies the method used for calculating the Magic Formula ranking.
+            magic_method (int): Specifies the method used for calculating the Magic Formula ranking.
                                  It determines which financial metrics are used for earnings yield
                                  and return on capital calculations.
         """
@@ -340,7 +341,7 @@ def display_results(df, args):
 
     base_cols = ["Rank_earnings_yield", "Rank_return_on_capital", "Rank_Final"]
 
-    magic_method_cols = MagicFormula.MAGIC_METHOD_FIELD[str(args.method)]
+    magic_method_cols = MagicFormula.MAGIC_METHOD_FIELD[args.method]
     earnings_yield_col = magic_method_cols["earnings yield"]
     return_on_capital_col = magic_method_cols["return on capital"]
 
@@ -383,7 +384,7 @@ def main():
     data_handler = DataSourceHandler(URL, force_update=args.force_update)
     pd_df = data_handler.get_data()
 
-    magicformula = MagicFormula(pd_df, str(args.method))
+    magicformula = MagicFormula(pd_df, args.method)
     ranked_df = magicformula.calc_rank()
     if ranked_df.empty:
         print("No companies passed the filtering criteria. The ranking is empty.")
