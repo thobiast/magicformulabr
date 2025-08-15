@@ -21,6 +21,8 @@ import pandas as pd
 import requests
 
 URL = "http://fundamentus.com.br/resultado.php"
+CACHE_FILE = "data_cache.json"
+CACHE_DURATION_SECONDS = 86400  # 24 hours
 
 
 ##############################################################################
@@ -101,8 +103,8 @@ class DataSourceHandler:
     def __init__(
         self,
         url,
-        cache_file="data_cache.json",
-        cache_duration=86400,
+        cache_file=CACHE_FILE,
+        cache_duration=CACHE_DURATION_SECONDS,
         force_update=False,
     ):
         """
